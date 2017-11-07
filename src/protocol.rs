@@ -1,3 +1,4 @@
+use std::result;
 
 use nanomsg_sys::*;
 
@@ -89,25 +90,24 @@ pub trait SPRecv: SPSocket {
 }
 
 pub trait SPSend: SPSocket {
-
     #[inline]
-    fn send(&self, buffer: &[u8]) -> Result<usize> {
-        self.socket().send(buffer, Flags::empty())
-    }
-
-    #[inline]
-    fn send_nb(&self, buffer: &[u8]) -> Result<usize> {
-        self.socket().send(buffer, Flags::DONTWAIT)
-    }
-
-    #[inline]
-    fn send_msg(&self, buffer: MessageBuffer) -> Result<usize> {
+    fn send(&self, buffer: MessageBuffer) -> Result<usize> {
         self.socket().send_msg(buffer, Flags::empty())
     }
 
     #[inline]
-    fn send_msg_nb(&self, buffer: MessageBuffer) -> Result<usize> {
+    fn send_nb(&self, buffer: MessageBuffer) -> Result<usize> {
         self.socket().send_msg(buffer, Flags::DONTWAIT)
+    }
+
+    #[inline]
+    fn send_buf(&self, buffer: &[u8]) -> Result<usize> {
+        self.socket().send(buffer, Flags::empty())
+    }
+
+    #[inline]
+    fn send_buf_nb(&self, buffer: &[u8]) -> Result<usize> {
+        self.socket().send(buffer, Flags::DONTWAIT)
     }
 
     sock_option!(send_buffer, set_send_buffer = NN_SNDBUF<i32>);
@@ -164,3 +164,72 @@ def_protocol!(Pull: SPRecv <> Push);
 def_protocol!(Surveyor: SPSend, SPRecv <> Respondent);
 def_protocol!(Respondent: SPSend, SPRecv <> Surveyor);
 def_protocol!(Pair: SPSend, SPRecv <> Pair);
+
+
+impl Req {
+    /// Send a request and block until we receive a reply
+    pub fn request(&self, body: MessageBuffer) -> Result<MessageBuffer> {
+        self.send(body)?;
+        self.recv()
+    }
+}
+
+impl Rep {
+    /// Reply to a request
+    ///
+    /// This will block waiting for a request, and once it receives
+    /// one, will use the supplied function to prepare a response.
+    pub fn reply<F, E>(&self, handler: F) -> result::Result<(), E>
+        where F: Fn(MessageBuffer) -> result::Result<MessageBuffer, E>,
+              E: From<Error>
+    {
+        let request = self.recv()?;
+        self.send(handler(request)?)?;
+        Ok(())
+    }
+
+    /// Wait in a loop, replying to messages with
+    /// the supplied handler.
+    ///
+    /// If an error is encountered the loop will be stopped and the
+    /// error returned.
+    pub fn reply_loop<F, E>(&self, handler: &F) -> E
+        where F: Fn(MessageBuffer) -> result::Result<MessageBuffer, E>,
+              E: From<Error>
+    {
+        loop {
+            if let Err(e) = self.reply(handler) {
+                return e;
+            }
+        }
+    }
+}
+
+impl Surveyor {
+    pub fn survey(&self, message: MessageBuffer) -> Result<Vec<MessageBuffer>> {
+        use error::TIMED_OUT;
+        self.send(message)?;
+        let mut responses: Vec<MessageBuffer> = Vec::new();
+        loop {
+            match self.recv() {
+                Ok(resp) => responses.push(resp),
+                Err(TIMED_OUT) => {
+                    responses.shrink_to_fit();
+                    return Ok(responses);
+                },
+                Err(e) => return Err(e)
+            }
+        }
+    }
+}
+
+impl Respondent {
+    pub fn respond<F, E>(&self, mut handler: F) -> result::Result<(), E>
+        where F: FnMut(MessageBuffer) -> result::Result<MessageBuffer, E>,
+              E: From<Error>
+    {
+        let request = self.recv()?;
+        self.send(handler(request)?)?;
+        Ok(())
+    }
+}
