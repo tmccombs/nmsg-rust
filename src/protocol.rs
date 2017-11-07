@@ -11,8 +11,8 @@ macro_rules! sock_option {
         fn $getter(&self) -> $t {
             unsafe { self.socket().get_option::<$t>(NN_SOL_SOCKET, $opt) }.unwrap()
         }
-        fn $setter(&mut self, val: $t) -> Result<()> {
-            unsafe { self.socket_mut().set_option::<$t>(NN_SOL_SOCKET, $opt, val) }
+        fn $setter(&self, val: $t) -> Result<()> {
+            unsafe { self.socket().set_option::<$t>(NN_SOL_SOCKET, $opt, val) }
         }
     };
 }
@@ -23,17 +23,16 @@ pub trait SPSocket {
     type Companion: SPSocket;
 
     fn socket(&self) -> &Socket;
-    fn socket_mut(&mut self) -> &mut Socket;
     fn protocol(&self) -> Protocol;
 
     #[inline]
-    fn bind(&mut self, addr: &str) -> Result<Endpoint> {
-        self.socket_mut().bind(addr)
+    fn bind(&self, addr: &str) -> Result<Endpoint> {
+        self.socket().bind(addr)
     }
 
     #[inline]
-    fn connect(&mut self, addr: &str) -> Result<Endpoint> {
-        self.socket_mut().connect(addr)
+    fn connect(&self, addr: &str) -> Result<Endpoint> {
+        self.socket().connect(addr)
     }
 
     fn loopback_device(&self) -> Error {
@@ -92,22 +91,22 @@ pub trait SPRecv: SPSocket {
 pub trait SPSend: SPSocket {
     #[inline]
     fn send(&self, buffer: MessageBuffer) -> Result<usize> {
-        self.socket().send_msg(buffer, Flags::empty())
-    }
-
-    #[inline]
-    fn send_nb(&self, buffer: MessageBuffer) -> Result<usize> {
-        self.socket().send_msg(buffer, Flags::DONTWAIT)
-    }
-
-    #[inline]
-    fn send_buf(&self, buffer: &[u8]) -> Result<usize> {
         self.socket().send(buffer, Flags::empty())
     }
 
     #[inline]
-    fn send_buf_nb(&self, buffer: &[u8]) -> Result<usize> {
+    fn send_nb(&self, buffer: MessageBuffer) -> Result<usize> {
         self.socket().send(buffer, Flags::DONTWAIT)
+    }
+
+    #[inline]
+    fn send_buf(&self, buffer: &[u8]) -> Result<usize> {
+        self.socket().send_buf(buffer, Flags::empty())
+    }
+
+    #[inline]
+    fn send_buf_nb(&self, buffer: &[u8]) -> Result<usize> {
+        self.socket().send_buf(buffer, Flags::DONTWAIT)
     }
 
     sock_option!(send_buffer, set_send_buffer = NN_SNDBUF<i32>);
@@ -144,9 +143,6 @@ macro_rules! def_protocol {
 
             fn socket(&self) -> &Socket {
                 &self.sock
-            }
-            fn socket_mut(&mut self) -> &mut Socket {
-                &mut self.sock
             }
         }
 

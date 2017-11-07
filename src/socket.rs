@@ -72,7 +72,7 @@ impl Socket {
         Ok(Socket(fd))
     }
 
-    pub fn bind(&mut self, addr: &str) -> Result<Endpoint> {
+    pub fn bind(&self, addr: &str) -> Result<Endpoint> {
         unsafe {
             let c_addr = CString::new(addr)?;
             let endpoint = nn_bind(self.0, c_addr.as_ptr());
@@ -84,7 +84,7 @@ impl Socket {
         }
     }
 
-    pub fn connect(&mut self, addr: &str) -> Result<Endpoint> {
+    pub fn connect(&self, addr: &str) -> Result<Endpoint> {
         unsafe {
             let c_addr = CString::new(addr)?;
             let endpoint = nn_connect(self.0, c_addr.as_ptr());
@@ -115,7 +115,7 @@ impl Socket {
         Ok(size as usize)
     }
 
-    pub fn send(&self, buffer: &[u8], flags: Flags) -> Result<usize> {
+    pub fn send_buf(&self, buffer: &[u8], flags: Flags) -> Result<usize> {
         let size = unsafe {
             nn_send(self.0, buffer.as_ptr() as *const c_void, buffer.len(), flags.bits)
         };
@@ -123,7 +123,7 @@ impl Socket {
         Ok(size as usize)
     }
 
-    pub fn send_msg(&self, buffer: MessageBuffer, flags: Flags) -> Result<usize> {
+    pub fn send(&self, buffer: MessageBuffer, flags: Flags) -> Result<usize> {
         let size = unsafe {
             let buf_ptr = buffer.into_raw();
             nn_send(self.0, &buf_ptr as *const _ as *const c_void, NN_MSG, flags.bits)
@@ -165,7 +165,7 @@ impl Socket {
         Socket(fd)
     }
 
-    pub unsafe fn set_option<T: OptionSet>(&mut self, level: c_int, option: c_int, value: T) -> Result<()> {
+    pub unsafe fn set_option<T: OptionSet>(&self, level: c_int, option: c_int, value: T) -> Result<()> {
         T::set(self.0, level, option, value)
     }
 
