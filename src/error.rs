@@ -37,7 +37,7 @@ impl error::Error for Error {
             EMFILE => "Maximum number of file descriptors exceeded",
             ETERM => "Process is terminating",
             EBADF => "Bad file descriptor",
-            EINTR => "Interupt",
+            EINTR => "Interrupt",
             ENOPROTOOPT => "No such option",
             ENAMETOOLONG => "Address is too long",
             EPROTONOSUPPORT => "Protocol is not supported",
