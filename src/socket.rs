@@ -218,6 +218,38 @@ impl OptionSet for i32 {
     }
 }
 
+impl OptionGet for Vec<u8> {
+    fn get(fd: c_int, level: c_int, option: c_int) -> Result<Vec<u8>> {
+        const BUF_SIZE: usize = 128;
+        let mut value = vec![0; BUF_SIZE];
+        let mut size = BUF_SIZE;
+        let ret = unsafe {
+            nn_getsockopt(fd,
+                          level,
+                          option,
+                          value.as_mut_ptr() as *mut c_void,
+                          &mut size as *mut _)
+        };
+        error_guard!(ret);
+        value.truncate(size);
+        Ok(value)
+    }
+}
+
+impl<'a> OptionSet for &'a [u8] {
+    fn set(fd: c_int, level: c_int, option: c_int, val: &[u8]) -> Result<()> {
+        let ret = unsafe {
+            nn_setsockopt(fd,
+                          level,
+                          option,
+                          val.as_ptr() as *const c_void,
+                          val.len())
+        };
+        error_guard!(ret);
+        Ok(())
+    }
+}
+
 impl OptionGet for bool {
     fn get(fd: c_int, level: c_int, option: c_int) -> Result<bool> {
         <i32 as OptionGet>::get(fd, level, option).map(|v| v != 0)

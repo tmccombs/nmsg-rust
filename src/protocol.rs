@@ -161,6 +161,19 @@ def_protocol!(Surveyor: SPSend, SPRecv <> Respondent);
 def_protocol!(Respondent: SPSend, SPRecv <> Surveyor);
 def_protocol!(Pair: SPSend, SPRecv <> Pair);
 
+impl Sub {
+    pub fn subscribe(&self, topic: &[u8]) {
+        unsafe {
+            self.socket().set_option(NN_SUB, NN_SUB_SUBSCRIBE, topic).unwrap();
+        }
+    }
+
+    pub fn unsubscribe(&self, topic: &[u8]) {
+        unsafe {
+            self.socket().set_option(NN_SUB, NN_SUB_UNSUBSCRIBE, topic).unwrap();
+        }
+    }
+}
 
 impl Req {
     /// Send a request and block until we receive a reply
