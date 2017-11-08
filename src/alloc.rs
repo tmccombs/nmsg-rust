@@ -1,3 +1,4 @@
+use std::borrow::{Borrow, BorrowMut};
 use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
@@ -42,6 +43,16 @@ impl MessageBuffer {
         self.size = new_size;
     }
 
+    #[inline]
+    pub fn as_slice(&self) -> &[u8] {
+        self
+    }
+
+    #[inline]
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        self
+    }
+
     /// Convert the buffer to a raw pointer.
     ///
     /// It is the user's responsibility to free the buffer
@@ -65,6 +76,7 @@ impl MessageBuffer {
 }
 
 impl Drop for MessageBuffer {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             nn_freemsg(self.ptr);
@@ -75,6 +87,7 @@ impl Drop for MessageBuffer {
 impl Deref for MessageBuffer {
     type Target = [u8];
 
+    #[inline]
     fn deref(&self) -> &[u8] {
         unsafe {
             slice::from_raw_parts(self.ptr as *const u8, self.size)
@@ -83,6 +96,7 @@ impl Deref for MessageBuffer {
 }
 
 impl DerefMut for MessageBuffer {
+    #[inline]
     fn deref_mut(&mut self) -> &mut [u8] {
         unsafe {
             slice::from_raw_parts_mut(self.ptr as *mut u8, self.size)
@@ -90,3 +104,52 @@ impl DerefMut for MessageBuffer {
     }
 }
 
+impl Borrow<[u8]> for MessageBuffer {
+    fn borrow(&self) -> &[u8] {
+        self
+    }
+}
+
+impl BorrowMut<[u8]> for MessageBuffer {
+    fn borrow_mut(&mut self) -> &mut [u8] {
+        self
+    }
+}
+
+impl AsRef<[u8]> for MessageBuffer {
+    fn as_ref(&self) -> &[u8] {
+        self
+    }
+}
+
+impl<'a> From<&'a [u8]> for MessageBuffer {
+    fn from(buf: &[u8]) -> MessageBuffer {
+        let mut res = MessageBuffer::new(buf.len());
+        res.copy_from_slice(buf);
+        res
+    }
+}
+
+impl<'a> From<&'a str> for MessageBuffer {
+    fn from(s: &str) -> MessageBuffer {
+        MessageBuffer::from(s.as_bytes())
+    }
+}
+
+impl From<String> for MessageBuffer {
+    fn from(s: String) -> MessageBuffer {
+        MessageBuffer::from(s.as_bytes())
+    }
+}
+
+impl From<Vec<u8>> for MessageBuffer {
+    fn from(v: Vec<u8>) -> MessageBuffer {
+        MessageBuffer::from(v.as_slice())
+    }
+}
+
+impl Into<Vec<u8>> for MessageBuffer {
+    fn into(self) -> Vec<u8> {
+        Vec::from(self.as_slice())
+    }
+}
