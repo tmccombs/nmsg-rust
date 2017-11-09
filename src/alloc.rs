@@ -1,6 +1,6 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::mem;
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeTo, RangeFrom};
 use std::slice;
 
 use nanomsg_sys::{nn_allocmsg, nn_freemsg, nn_reallocmsg};
@@ -22,9 +22,8 @@ pub struct MessageBuffer {
 impl MessageBuffer {
     pub fn new(size: usize) -> MessageBuffer {
         let ptr = unsafe { nn_allocmsg(size, 0) };
-        if ptr.is_null() {
-            panic!("Out of Memory!");
-        }
+        assert!(!ptr.is_null(), "Out of Memory!");
+
         MessageBuffer {
             ptr,
             size
@@ -41,6 +40,11 @@ impl MessageBuffer {
         }
         self.ptr = ptr;
         self.size = new_size;
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.size
     }
 
     #[inline]
@@ -68,6 +72,7 @@ impl MessageBuffer {
     /// The pointer should have been allocated with
     /// `nn_allocmsg` or equivalent, with a size of `size`.
     pub unsafe fn from_raw(ptr: *mut c_void, size: usize) -> MessageBuffer {
+        assert!(!ptr.is_null());
         MessageBuffer {
             ptr,
             size
@@ -153,3 +158,46 @@ impl Into<Vec<u8>> for MessageBuffer {
         Vec::from(self.as_slice())
     }
 }
+
+// Index implementations
+
+macro_rules! def_index_op {
+    ($range:ty, $out:ty) => {
+        impl Index<$range> for MessageBuffer {
+            type Output = $out;
+
+            fn index(&self, index: $range) -> &$out {
+                Index::index(&**self, index)
+            }
+        }
+
+        impl IndexMut<$range> for MessageBuffer {
+            fn index_mut(&mut self, index: $range) -> &mut $out {
+                IndexMut::index_mut(&mut **self, index)
+            }
+        }
+    };
+    ($t:ty) => {
+        def_index_op!($t, [u8]);
+    }
+}
+
+def_index_op!(usize, u8);
+def_index_op!(Range<usize>);
+def_index_op!(RangeTo<usize>);
+def_index_op!(RangeFrom<usize>);
+
+impl Index<RangeFull> for MessageBuffer {
+    type Output = [u8];
+
+    fn index(&self, _: RangeFull) -> &[u8] {
+        &**self
+    }
+}
+
+impl IndexMut<RangeFull> for MessageBuffer {
+    fn index_mut(&mut self, _: RangeFull) -> &mut [u8] {
+        &mut **self
+    }
+}
+
