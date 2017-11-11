@@ -1,4 +1,8 @@
 use std::result;
+#[cfg(unix)]
+use std::os::unix::io::RawFd as PollFd;
+#[cfg(windows)]
+use std::os::windows::io::RawSocket as PollFd;
 
 use nanomsg_sys::*;
 
@@ -104,6 +108,16 @@ pub trait SPRecv: SPSocket {
     sock_option!(rcv_max_size, set_rcv_max_size = NN_RCVMAXSIZE<i32>);
     sock_option!(rcv_timeout, set_rcv_timeout = NN_RCVTIMEO<i32>);
     sock_option!(rcv_priority, set_rcv_priority = NN_RCVPRIO<i32>);
+
+    /// Get a raw file descriptor that is readable when a message can be received.
+    ///
+    /// This file descriptor should only be used to poll if the socket is
+    /// available for reading.
+    fn recv_poll_fd(&self) -> Result<PollFd> {
+        unsafe {
+            self.socket().get_option::<PollFd>(NN_SOL_SOCKET, NN_RCVFD)
+        }
+    }
 }
 
 pub trait SPSend: SPSocket {
@@ -130,6 +144,16 @@ pub trait SPSend: SPSocket {
     sock_option!(send_buffer, set_send_buffer = NN_SNDBUF<i32>);
     sock_option!(send_timeout, set_send_timeout = NN_SNDTIMEO<i32>);
     sock_option!(send_priority, set_send_priority = NN_SNDPRIO<i32>);
+
+    /// Get a raw file descriptor that is readable when a message can be sent.
+    ///
+    /// This file descriptor should only be used to poll if the socket is
+    /// available for writing.
+    fn send_poll_fd(&self) -> Result<PollFd> {
+        unsafe {
+            self.socket().get_option::<PollFd>(NN_SOL_SOCKET, NN_SNDFD)
+        }
+    }
 }
 
 macro_rules! def_protocol {

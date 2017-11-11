@@ -2,6 +2,8 @@ use std::ffi::CString;
 use error::{Error, Result};
 use std::mem;
 use std::ptr;
+#[cfg(windows)]
+use std::os::windows::io::RawSocket;
 
 use nanomsg_sys::*;
 
@@ -258,6 +260,23 @@ impl OptionGet for bool {
 impl OptionSet for bool {
     fn set(fd: c_int, level: c_int, option: c_int, val: bool) -> Result<()> {
         <i32 as OptionSet>::set(fd, level, option, val as i32)
+    }
+}
+
+#[cfg(windows)]
+impl OptionGet for RawSocket {
+    fn get(fd: c_int, level: c_int, option: c_int) -> Result<RawSocket> {
+        let mut value: RawSocket = 0;
+        let mut size = mem::size_of::<RawSocket>();
+        let ret = unsafe {
+            nn_getsockopt(fd,
+                          level,
+                          option,
+                          &mut value as *mut _ as *mut c_void,
+                          &mut size as *mut _)
+        };
+        error_guard!(ret);
+        Ok(value)
     }
 }
 
