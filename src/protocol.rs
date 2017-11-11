@@ -59,6 +59,24 @@ pub trait SPSocket {
     sock_option!(max_reconnect_interval, set_max_reconnect_interval = NN_RECONNECT_IVL_MAX<i32>);
     sock_option!(max_ttl, set_max_ttl = NN_MAXTTL<i32>);
     sock_option!(ipv4_only, set_ipv4_only = NN_IPV4ONLY<bool>);
+
+    /// Return true if Nagle's algorithm is disabled.
+    ///
+    /// This will fail if the underlying transport isn't TCP.
+    fn tcp_nodelay(&self) -> Result<bool> {
+        unsafe {
+            self.socket().get_option::<bool>(NN_TCP, NN_TCP_NODELAY)
+        }
+    }
+
+    /// Disable (or enable) Nagle's algorithm.
+    ///
+    /// This will fail if the underlying transport isn't TCP.
+    fn set_tcp_nodelay(&self, delay: bool) -> Result<()> {
+        unsafe {
+            self.socket().set_option(NN_TCP, NN_TCP_NODELAY, delay)
+        }
+    }
 }
 
 pub trait SPRecv: SPSocket {
