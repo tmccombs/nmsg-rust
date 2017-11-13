@@ -62,6 +62,24 @@ pub enum Protocol {
     Pair = NN_PAIR
 }
 
+/// A request for polling a socket and the poll result
+#[derive(Copy, Clone)]
+pub struct Poll(nn_pollfd);
+
+impl Poll {
+    /// Return if the socket is available for receiving a message
+    #[inline]
+    pub fn can_receive(&self) -> bool {
+        self.0.pollin_result()
+    }
+
+    /// Return if the socket is available to send a message
+    #[inline]
+    pub fn can_send(&self) -> bool {
+        self.0.pollout_result()
+    }
+}
+
 pub struct Socket(RawFd);
 
 impl Socket {
@@ -148,6 +166,29 @@ impl Socket {
 
     pub fn terminate() {
         unsafe { nn_term() };
+    }
+
+    pub fn make_poll(&self, pollin: bool, pollout: bool) -> Poll {
+        Poll(nn_pollfd::new(self.0, pollin, pollout))
+    }
+
+    /// Checks if it's possible to send or receive messages without blocking on set of sockets.
+    ///
+    /// # Arguments
+    ///
+    /// * polls - An array of `Poll` objects created with `Socket::make_poll` for the sockets to
+    /// poll. If a socket is ready for send or receive operations, the corresponding `Poll` object
+    /// will be updated to report the available operations.
+    /// * timeout - How long (in milliseconds) the poll function should block if there are no
+    /// events to report.
+    ///
+    /// # Returns
+    ///
+    /// How many sockets are available to send and/or receive, or an error.
+    pub fn poll(polls: &mut [Poll], timeout: i32) -> Result<usize> {
+        let nready = unsafe { nn_poll(polls.as_mut_ptr() as *mut nn_pollfd, polls.len() as c_int, timeout) };
+        error_guard!(nready);
+        Ok(nready as usize)
     }
 
     #[inline]
