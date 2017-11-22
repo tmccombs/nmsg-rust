@@ -28,6 +28,7 @@ pub type Result<T> = result::Result<T, Error>;
 pub struct Error(pub c_int);
 
 impl Error {
+    /// Create an `Error` from a raw errno from nanomsg.
     pub fn from_raw_nanomsg_error(errno: c_int) -> Error {
         Error(errno)
     }
