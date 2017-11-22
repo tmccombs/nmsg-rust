@@ -42,7 +42,8 @@ impl MessageBuffer {
         let ptr = unsafe {
             let p = nn_allocmsg(size, 0);
             assert!(!p.is_null(), "Out of Memory!");
-            memset(ptr, 0, size);
+            memset(p, 0, size);
+            p
         };
         MessageBuffer {
             ptr,
