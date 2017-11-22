@@ -1,3 +1,4 @@
+//! Module for allocating zero-copy buffers for nanomsg.
 use std::borrow::{Borrow, BorrowMut};
 use std::mem;
 use std::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeTo, RangeFrom};
@@ -6,20 +7,26 @@ use std::slice;
 use nanomsg_sys::{nn_allocmsg, nn_freemsg, nn_reallocmsg};
 use libc::c_void;
 
+/// A buffer of data for zero-copy messages with nanomsg
+///
+/// This is a buffer of bytes that avoids being copied when sent or received with
+/// nanomsg. Using a `MessageBuffer` can improve performance.
+///
+/// The `MessageBuffer` implements `Drop` so that it will automatically
+/// free its memory when it goes out of scope.
 #[derive(Debug)]
 pub struct MessageBuffer {
     ptr: *mut c_void,
     size: usize
 }
 
-/// A buffer of data for zero-copy messages with nanomsg
-///
-/// This is a buffer of bytes that avoids being copied when sent with
-/// nanomsg. Using a `MessageBuffer` can improve performance.
-///
-/// The `MessageBuffer` implements `Drop` so that it will automatically
-/// free its memory when it goes out of scope.
 impl MessageBuffer {
+    /// Create a new `MessageBuffer` of the given size.
+    ///
+    /// # Note
+    ///
+    /// The contents of the buffer is uninitialized. Use `zeroed` if you want
+    /// it to be initially filled with zeros.
     pub fn new(size: usize) -> MessageBuffer {
         let ptr = unsafe { nn_allocmsg(size, 0) };
         assert!(!ptr.is_null(), "Out of Memory!");
@@ -28,6 +35,16 @@ impl MessageBuffer {
             ptr,
             size
         }
+    }
+
+    /// Create a new `MessageBuffer` that is initialized with zeros.
+    pub fn zeroed(size: usize) -> MessageBuffer {
+        let mut buffer = MessageBuffer::new(size);
+        // Is this the most efficient way to do this?
+        for mut i in buffer.iter_mut() {
+            *i = 0;
+        }
+        buffer
     }
 
     /// Resize the buffer.
@@ -42,16 +59,23 @@ impl MessageBuffer {
         self.size = new_size;
     }
 
+    /// The length of the `MessageBuffer` in bytes.
     #[inline]
     pub fn len(&self) -> usize {
         self.size
     }
 
+    /// Extracts a slice containing the entire buffer.
+    ///
+    /// Equivalent to `&s[...]`.
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
         self
     }
 
+    /// Extracts a mutable slice of the entire buffer.
+    ///
+    /// Equivalent to `&mut s[...]`.
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         self
