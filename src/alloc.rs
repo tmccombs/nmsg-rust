@@ -5,7 +5,7 @@ use std::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeTo, Rang
 use std::slice;
 
 use nanomsg_sys::{nn_allocmsg, nn_freemsg, nn_reallocmsg};
-use libc::c_void;
+use libc::{c_void, memset};
 
 /// A buffer of data for zero-copy messages with nanomsg
 ///
@@ -39,12 +39,15 @@ impl MessageBuffer {
 
     /// Create a new `MessageBuffer` that is initialized with zeros.
     pub fn zeroed(size: usize) -> MessageBuffer {
-        let mut buffer = MessageBuffer::new(size);
-        // Is this the most efficient way to do this?
-        for mut i in buffer.iter_mut() {
-            *i = 0;
+        let ptr = unsafe {
+            let p = nn_allocmsg(size, 0);
+            assert!(!p.is_null(), "Out of Memory!");
+            memset(ptr, 0, size);
+        };
+        MessageBuffer {
+            ptr,
+            size
         }
-        buffer
     }
 
     /// Resize the buffer.
