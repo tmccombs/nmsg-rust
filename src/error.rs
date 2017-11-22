@@ -1,12 +1,19 @@
-use std::error;
 use std::ffi::{CStr, NulError};
 use std::fmt;
 use std::result;
+
+use failure::Fail;
 
 use nanomsg_sys::*;
 
 pub type Result<T> = result::Result<T, Error>;
 
+/// An error from nanomsg
+///
+/// This contains the errno from the underlying nanomsg operation.
+///
+/// # See Also
+/// * [nanomsg(7)](http://nanomsg.org/v1.1.2/nanomsg.html)
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Error(pub c_int);
 
@@ -29,31 +36,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self.0 {
-            EINVAL => "Invalid argument",
-            EAFNOSUPPORT => "Address family is not supported",
-            EMFILE => "Maximum number of file descriptors exceeded",
-            ETERM => "Process is terminating",
-            EBADF => "Bad file descriptor",
-            EINTR => "Interrupt",
-            ENOPROTOOPT => "No such option",
-            ENAMETOOLONG => "Address is too long",
-            EPROTONOSUPPORT => "Protocol is not supported",
-            EADDRNOTAVAIL => "Address is not available",
-            ENODEV => "No such interface",
-            EADDRINUSE => "Address is already in use",
-            EFAULT => "Memory fault",
-            ENOTSUP => "Operation not supported",
-            EFSM => "Operation not supported in current state",
-            EAGAIN => "Operation would block",
-            ETIMEDOUT => "Operation timed out",
-            ENOMEM => "Out of Memory",
-            _ => "Unknown error from nanomsg"
-        }
-    }
-}
+impl Fail for Error {}
 
 macro_rules! error_consts {
     ($($name:ident = $cname:ident;)+) => {

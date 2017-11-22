@@ -7,3 +7,4 @@ authors = ["Thayne McCombs <astrothayne@gmail.com>"]
 nanomsg-sys = "0.6.2"
 libc = "0.2.33"
 bitflags = "1.0"
+failure = "0.1.0"
