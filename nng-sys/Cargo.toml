@@ -1,0 +1,15 @@
+[package]
+name = "nng-sys"
+version = "0.1.0"
+authors = ["Thayne McCombs <astrothayne@gmail.com>"]
+license = "MIT"
+description = "Low level bindings for nng (nanomsg next generation)"
+repository = "https://github.com/tmccombs/nmsg"
+keywords = ["binding", "nanomsg", "nng"]
+build = "build.rs"
+
+[dependencies]
+libc = "0.2.24"
+
+[build-dependencies]
+cmake = "0.1.29"
