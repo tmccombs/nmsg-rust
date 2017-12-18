@@ -126,10 +126,10 @@ pub struct nng_sockaddr_in {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct nng_sockaddr_zt {
-    sa_family: u16,
-    sa_nwid: u64,
-    sa_nodeid: u64,
-    sa_port: u32
+    pub sa_family: u16,
+    pub sa_nwid: u64,
+    pub sa_nodeid: u64,
+    pub sa_port: u32
 }
 
 #[repr(C)]
@@ -232,7 +232,7 @@ extern {
     // Message API
     pub fn nng_msg_alloc(msg: &mut *mut nng_msg, cap: usize) -> c_int;
     pub fn nng_msg_free(msg: *mut nng_msg);
-    pub fn nng_realloc(msg: *mut nng_msg, size: usize) -> c_int;
+    pub fn nng_msg_realloc(msg: *mut nng_msg, size: usize) -> c_int;
     pub fn nng_msg_header(msg: *mut nng_msg) -> *mut c_void;
     pub fn nng_msg_header_len(msg: *const nng_msg) -> usize;
     pub fn nng_msg_body(msg: *mut nng_msg) -> *mut c_void;
@@ -268,6 +268,21 @@ extern {
     pub fn nng_pipe_getopt_size(pipe: nng_pipe, opt: *const c_char, valp: &mut usize) -> c_int;
     pub fn nng_pipe_getopt_uint64(pipe: nng_pipe, opt: *const c_char, valp: &mut u64) -> c_int;
     pub fn nng_pipe_close(pipe: nng_pipe) -> c_int;
+
+
+    // Protocols
+    pub fn nng_bus0_open(&mut nng_socket) -> c_int;
+    pub fn nng_pair0_open(&mut nng_socket) -> c_int;
+    pub fn nng_pair1_open(&mut nng_socket) -> c_int;
+    pub fn nng_push0_open(&mut nng_socket) -> c_int;
+    pub fn nng_pull0_open(&mut nng_socket) -> c_int;
+    pub fn nng_pub0_open(&mut nng_socket) -> c_int;
+    pub fn nng_sub0_open(&mut nng_socket) -> c_int;
+    pub fn nng_req0_open(&mut nng_socket) -> c_int;
+    pub fn nng_rep0_open(&mut nng_socket) -> c_int;
+    pub fn nng_respondent0_open(&mut nng_socket) -> c_int;
+    pub fn nng_surveyor0_open(&mut nng_socket) -> c_int;
+
 
     pub fn nng_device(sock1: nng_socket, sock2: nng_socket) -> c_int;
 
