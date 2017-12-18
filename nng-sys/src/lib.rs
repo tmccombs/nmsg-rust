@@ -271,17 +271,17 @@ extern {
 
 
     // Protocols
-    pub fn nng_bus0_open(&mut nng_socket) -> c_int;
-    pub fn nng_pair0_open(&mut nng_socket) -> c_int;
-    pub fn nng_pair1_open(&mut nng_socket) -> c_int;
-    pub fn nng_push0_open(&mut nng_socket) -> c_int;
-    pub fn nng_pull0_open(&mut nng_socket) -> c_int;
-    pub fn nng_pub0_open(&mut nng_socket) -> c_int;
-    pub fn nng_sub0_open(&mut nng_socket) -> c_int;
-    pub fn nng_req0_open(&mut nng_socket) -> c_int;
-    pub fn nng_rep0_open(&mut nng_socket) -> c_int;
-    pub fn nng_respondent0_open(&mut nng_socket) -> c_int;
-    pub fn nng_surveyor0_open(&mut nng_socket) -> c_int;
+    pub fn nng_bus0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_pair0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_pair1_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_push0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_pull0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_pub0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_sub0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_req0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_rep0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_respondent0_open(sock: &mut nng_socket) -> c_int;
+    pub fn nng_surveyor0_open(sock: &mut nng_socket) -> c_int;
 
 
     pub fn nng_device(sock1: nng_socket, sock2: nng_socket) -> c_int;
