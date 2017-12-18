@@ -1,2 +1,16 @@
+[project]
+name = "nmsg"
+version = "0.1.0"
+authors = ["Thayne McCombs <astrothayne@gmail.com>"]
+license = "MIT"
+description = "Rust binding for nng (nanomsg next generation)"
+repository = "https://github.com/tmccombs/nmsg"
+keywords = ["binding", "nanomsg", "nng", "protocol"]
+
+[dependencies]
+nng-sys = { path = "./nng-sys", version = "0.1.0" }
+libc = "0.2.24"
+failure = "0.1.1"
+
 [workspace]
 members = ["nng-sys"]

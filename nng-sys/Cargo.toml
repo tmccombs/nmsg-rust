@@ -8,6 +8,9 @@ repository = "https://github.com/tmccombs/nmsg"
 keywords = ["binding", "nanomsg", "nng"]
 build = "build.rs"
 
+[lib]
+name = "nng_sys"
+
 [dependencies]
 libc = "0.2.24"
 
