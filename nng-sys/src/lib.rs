@@ -1,6 +1,8 @@
 #![allow(non_camel_case_types)]
 extern crate libc;
 
+use std::ops;
+
 use libc::{c_char, c_int, c_void};
 
 pub type AioCallback = extern "C" fn(*mut c_void);
@@ -29,25 +31,46 @@ pub const NNG_MAXADDRLEN: usize = 128;
 pub const NNG_FLAG_ALLOC: c_int = 1;
 pub const NNG_FLAG_NONBLOCK: c_int = 2;
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct OptionName(&'static [u8]);
+
+impl OptionName {
+    pub unsafe fn new(bytes: &'static [u8]) -> OptionName {
+        assert_eq!(bytes.last().cloned(), Some(0), "Last byte isn't null");
+        OptionName(bytes)
+    }
+
+    pub fn as_ptr(&self) -> *const c_char {
+        self.0.as_ptr() as *const c_char
+    }
+}
+
+impl ops::Deref for OptionName {
+    type Target = [u8];
+    fn deref(&self) -> &[u8] {
+        &self.0[..(self.0.len() - 1)]
+    }
+}
+
 // options
-pub const NNG_OPT_SOCKNAME: &'static str = "socket-name";
-pub const NNG_OPT_RAW: &'static str = "raw";
-pub const NNG_OPT_LINGER: &'static str = "linger";
-pub const NNG_OPT_RECVBUF: &'static str = "recv-buffer";
-pub const NNG_OPT_SENDBUF: &'static str = "send-buffer";
-pub const NNG_OPT_RECVFD: &'static str = "recv-fd";
-pub const NNG_OPT_SENDFD: &'static str = "send-fd";
-pub const NNG_OPT_RECVTIMEO: &'static str = "recv-timeout";
-pub const NNG_OPT_SENDTIMEO: &'static str = "send-timeout";
-pub const NNG_OPT_LOCADDR: &'static str = "local-address";
-pub const NNG_OPT_REMADDR: &'static str = "remote-address";
-pub const NNG_OPT_URL: &'static str = "url";
-pub const NNG_OPT_MAXTTL: &'static str = "ttl-max";
-pub const NNG_OPT_PROTOCOL: &'static str = "protocol";
-pub const NNG_OPT_TRANSPORT: &'static str = "transport";
-pub const NNG_OPT_RECVMAXSZ: &'static str = "recv-size-max";
-pub const NNG_OPT_RECONNMINT: &'static str = "reconnect-time-min";
-pub const NNG_OPT_RECONNMAXT: &'static str = "reconnect-time-max";
+pub const NNG_OPT_SOCKNAME: OptionName = OptionName(b"socket-name\0");
+pub const NNG_OPT_RAW: OptionName = OptionName(b"raw\0");
+pub const NNG_OPT_LINGER: OptionName = OptionName(b"linger\0");
+pub const NNG_OPT_RECVBUF: OptionName = OptionName(b"recv-buffer\0");
+pub const NNG_OPT_SENDBUF: OptionName = OptionName(b"send-buffer\0");
+pub const NNG_OPT_RECVFD: OptionName = OptionName(b"recv-fd\0");
+pub const NNG_OPT_SENDFD: OptionName = OptionName(b"send-fd\0");
+pub const NNG_OPT_RECVTIMEO: OptionName = OptionName(b"recv-timeout\0");
+pub const NNG_OPT_SENDTIMEO: OptionName = OptionName(b"send-timeout\0");
+pub const NNG_OPT_LOCADDR: OptionName = OptionName(b"local-address\0");
+pub const NNG_OPT_REMADDR: OptionName = OptionName(b"remote-address\0");
+pub const NNG_OPT_URL: OptionName = OptionName(b"url\0");
+pub const NNG_OPT_MAXTTL: OptionName = OptionName(b"ttl-max\0");
+pub const NNG_OPT_PROTOCOL: OptionName = OptionName(b"protocol\0");
+pub const NNG_OPT_TRANSPORT: OptionName = OptionName(b"transport\0");
+pub const NNG_OPT_RECVMAXSZ: OptionName = OptionName(b"recv-size-max\0");
+pub const NNG_OPT_RECONNMINT: OptionName = OptionName(b"reconnect-time-min\0");
+pub const NNG_OPT_RECONNMAXT: OptionName = OptionName(b"reconnect-time-max\0");
 
 
 // Error codes

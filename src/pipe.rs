@@ -1,5 +1,3 @@
-use std::ffi::CString;
-
 use libc::c_void;
 use nng_sys::*;
 
@@ -60,10 +58,9 @@ impl Pipe {
     /// incorrect, incomplete, or even unsafe.
     ///
     /// If possible use a named method to get the option you want.
-    pub unsafe fn get_option<T: GetOption>(&self, name: &str) -> Result<T> {
-        let cname = CString::new(name)?;
+    pub unsafe fn get_option<T: GetOption>(&self, name: OptionName) -> Result<T> {
         T::get_option(|ptr: *mut c_void, size: &mut usize| {
-            error_guard!(nng_pipe_getopt(self.0, cname.as_ptr(), ptr, size));
+            error_guard!(nng_pipe_getopt(self.0, name.as_ptr(), ptr, size));
             Ok(())
         })
     }
