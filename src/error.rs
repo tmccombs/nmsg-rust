@@ -1,40 +1,56 @@
 use std::ffi::{CStr, NulError};
 use std::fmt;
 use std::result;
+use std::string::FromUtf8Error;
 
-use failure::Fail;
 use nng_sys::*;
 
 pub type Result<T> = result::Result<T, Error>;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct Error(pub i32);
+#[derive(Debug, Fail)]
+pub enum Error {
+    Nng(i32),
+    NulByte(#[cause] NulError),
+    Utf8Error(#[cause] FromUtf8Error)
+}
+
+use self::Error::*;
 
 impl Error {
     pub fn from_raw(errno: i32) -> Error {
-        Error(errno)
+        Error::Nng(errno)
     }
 }
 
 impl From<NulError> for Error {
-    fn from(_: NulError) -> Error {
-        Error(NNG_EINVAL)
+    fn from(e: NulError) -> Error {
+        NulByte(e)
+    }
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(e: FromUtf8Error) -> Error {
+        Utf8Error(e)
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let message = unsafe { CStr::from_ptr(nng_strerror(self.0)) };
-        write!(f, "{}", message.to_str().unwrap())
+        match *self {
+            Nng(errno) => {
+                let message = unsafe { CStr::from_ptr(nng_strerror(errno)) };
+                write!(f, "{}", message.to_str().unwrap())
+            }
+            NulByte(ref e) => e.fmt(f),
+            Utf8Error(ref e) => e.fmt(f)
+        }
     }
 }
-
-impl Fail for Error {}
 
 #[macro_export]
 macro_rules! error_consts {
     ($($(#[$attrs:meta])* $name:ident = $cname:ident;)+) => {
-        $($(#[$attrs])* pub const $name: Error = Error($cname);)+
+        $($(#[$attrs])* pub const $name: Error = Error::Nng($cname);)+
     }
 }
 
@@ -73,7 +89,7 @@ macro_rules! error_guard {
     ($ret:expr) => {
         let r = $ret;
         if r != 0 {
-            return Err($crate::error::Error(r));
+            return Err($crate::error::Error::from_raw(r));
         }
     }
 }

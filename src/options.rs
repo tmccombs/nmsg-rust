@@ -81,6 +81,14 @@ impl GetOption for Vec<u8> {
     }
 }
 
+impl GetOption for String {
+    fn get_option<F>(getter: F) -> Result<String> where F: FnMut(*mut c_void, &mut usize) -> Result<()> {
+        <Vec<u8> as GetOption>::get_option(getter).and_then(|s| {
+            String::from_utf8(s).map_err(Error::from)
+        })
+    }
+}
+
 impl GetOption for Milliseconds {
     fn get_option<F>(mut getter: F) -> Result<Milliseconds> where F: FnMut(*mut c_void, &mut usize) -> Result<()> {
         let mut val: nng_duration = 0;
@@ -109,4 +117,20 @@ impl GetOption for SocketAddr {
     fn get_option<F>(getter: F) -> Result<SocketAddr> where F: FnMut(*mut c_void, &mut usize) -> Result<()> {
         nng_sockaddr::get_option(getter).map(SocketAddr::from)
     }
+}
+
+macro_rules! impl_get_option {
+    ($f:ident, $target:expr, $name:ident) => {
+        $crate::options::GetOption::get_option(|ptr: *mut ::std::os::raw::c_void, size: &mut usize| {
+            error_guard!($f($target, $name.as_ptr(), ptr, size));
+            Ok(())
+        })
+    }
+}
+
+macro_rules! impl_set_option {
+    ($f:ident, $target: expr, $name:ident, $value:ident) => {{
+        error_guard!($f($target, $name.as_ptr(), $value.as_ptr(), $value.size()));
+        Ok(())
+    }}
 }

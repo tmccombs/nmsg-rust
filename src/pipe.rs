@@ -58,10 +58,7 @@ impl Pipe {
     ///
     /// If possible use a named method to get the option you want.
     pub unsafe fn get_option<T: GetOption>(&self, name: OptionName) -> Result<T> {
-        T::get_option(|ptr, size| {
-            error_guard!(nng_pipe_getopt(self.0, name.as_ptr(), ptr, size));
-            Ok(())
-        })
+        impl_get_option!(nng_pipe_getopt, self.0, name)
     }
 }
 
