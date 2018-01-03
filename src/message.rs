@@ -5,7 +5,6 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use std::slice;
 
-use libc::{c_void};
 use nng_sys::*;
 
 use pipe::Pipe;
@@ -99,14 +98,14 @@ impl Message {
     /// Append bytes to the end of the message.
     pub fn append(&mut self, data: &[u8]) {
         unsafe {
-            oom_check!(nng_msg_append(self.ptr, data.as_ptr() as *const c_void, data.len()));
+            oom_check!(nng_msg_append(self.ptr, data.as_ptr() as *const _, data.len()));
         }
     }
 
     /// Prepend bytes to the beginning of the message.
     pub fn prepend(&mut self, data: &[u8]) {
         unsafe {
-            oom_check!(nng_msg_insert(self.ptr, data.as_ptr() as *const c_void, data.len()));
+            oom_check!(nng_msg_insert(self.ptr, data.as_ptr() as *const _, data.len()));
         }
     }
 
@@ -237,14 +236,14 @@ impl<'a> MessageHeader<'a> {
     /// Append bytes to the header.
     pub fn append(&mut self, data: &[u8]) {
         unsafe {
-            oom_check!(nng_msg_header_append(self.ptr, data.as_ptr() as *const c_void, data.len()))
+            oom_check!(nng_msg_header_append(self.ptr, data.as_ptr() as *const _, data.len()))
         };
     }
 
     /// Prepend bytes to the header.
     pub fn prepend(&mut self, data: &[u8]) {
         unsafe {
-            oom_check!(nng_msg_header_insert(self.ptr, data.as_ptr() as *const c_void, data.len()))
+            oom_check!(nng_msg_header_insert(self.ptr, data.as_ptr() as *const _, data.len()))
         };
     }
 

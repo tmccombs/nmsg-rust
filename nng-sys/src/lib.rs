@@ -1,9 +1,7 @@
 #![allow(non_camel_case_types)]
-extern crate libc;
 
 use std::ops;
-
-use libc::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_int, c_void};
 
 pub type AioCallback = extern "C" fn(*mut c_void);
 
@@ -18,6 +16,7 @@ pub enum nng_msg {}
 pub enum nng_snapshot {}
 pub enum nng_stat {}
 pub enum nng_aio {}
+pub enum nng_tls_config {}
 
 /// Infinite duration
 pub const NNG_DURATION_INFINITE: nng_duration = -1;
@@ -110,6 +109,25 @@ pub const NNG_AF_IPC:u16 = 2;
 pub const NNG_AF_INET:u16 = 3;
 pub const NNG_AF_INET6:u16 = 4;
 pub const NNG_AF_ZT:u16 = 5;
+
+
+// TLS configuration
+
+#[repr(C)]
+pub enum nng_tls_mode {
+    Client = 0,
+    Server = 1
+}
+
+#[repr(C)]
+pub enum nng_tls_auth_mode {
+    /// No verification is performed
+    None = 0,
+    /// Verify cert if present
+    Optional = 1,
+    /// Verify cert, close if invalide
+    Required = 2
+}
 
 // stats
 pub const NNG_STAT_LEVEL: c_int = 0;
@@ -308,6 +326,20 @@ extern {
 
 
     pub fn nng_device(sock1: nng_socket, sock2: nng_socket) -> c_int;
+
+    // TLS
+
+    pub fn nng_tls_config_alloc(ptr: &mut *mut nng_tls_config, mode: nng_tls_mode) -> c_int;
+    pub fn nng_tls_config_free(ptr: *mut nng_tls_config);
+
+
+    pub fn nng_tls_config_server_name(cfg: *mut nng_tls_config, name: *const c_char);
+    pub fn nng_tls_config_ca_cert(cfg: *mut nng_tls_config, data: *const u8, len: usize) -> c_int;
+    pub fn nng_tls_config_crl(cfg: *mut nng_tls_config, data: *const u8, len: usize) -> c_int;
+    pub fn nng_tls_config_cert(cfg: *mut nng_tls_config, data: *const u8, len: usize) -> c_int;
+    pub fn nng_tls_config_key(cfg: *mut nng_tls_config, data: *const u8, len: usize) -> c_int;
+    pub fn nng_tls_config_pass(cfg: *mut nng_tls_config, pass: *const c_char) -> c_int;
+    pub fn nng_tls_config_auth_mode(cfg: *mut nng_tls_config, mode: nng_tls_auth_mode) -> c_int;
 
     // Statistics
     pub fn nng_snapshot_create(socket: nng_socket, snap: &mut *mut nng_snapshot) -> c_int;

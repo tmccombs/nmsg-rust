@@ -1,7 +1,7 @@
 use std::mem;
 use std::ops::Deref;
+use std::os::raw::c_void;
 
-use libc::c_void;
 use nng_sys::{nng_duration, nng_sockaddr, NNG_AF_UNSPEC};
 
 use address::SocketAddr;

@@ -11,8 +11,5 @@ build = "build.rs"
 [lib]
 name = "nng_sys"
 
-[dependencies]
-libc = "0.2.24"
-
 [build-dependencies]
 cmake = "0.1.29"

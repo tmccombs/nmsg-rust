@@ -1,4 +1,3 @@
-use libc::c_void;
 use nng_sys::*;
 
 use address::SocketAddr;
@@ -59,7 +58,7 @@ impl Pipe {
     ///
     /// If possible use a named method to get the option you want.
     pub unsafe fn get_option<T: GetOption>(&self, name: OptionName) -> Result<T> {
-        T::get_option(|ptr: *mut c_void, size: &mut usize| {
+        T::get_option(|ptr, size| {
             error_guard!(nng_pipe_getopt(self.0, name.as_ptr(), ptr, size));
             Ok(())
         })

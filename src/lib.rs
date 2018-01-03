@@ -1,5 +1,4 @@
 extern crate failure;
-extern crate libc;
 extern crate nng_sys;
 
 mod address;
